@@ -16,6 +16,7 @@ using IntakeBase=Xom.Gci.Addin.LvMake.Intake.Base;
 using IIntakeBase = Xom.Gci.Addin.LvMake.IIntake;
 using Xom.Gci.Addin.LvMake.SimpleIntake;
 using Xom.Gci.Addin.LvMake.Helpers;
+using Xom.Gci.Addin.LvMake.Common.Models;
 
 namespace ConsoleApp1
 {
@@ -171,7 +172,7 @@ namespace ConsoleApp1
                         openWorkbook.Context = new SimpleIntakeContext(workbook, false);
                         openWorkbook.ReviewComplete = new SimpleIntakeReviewComplete(workbook, false);
                         openWorkbook.Validation = new SimpleIntakeValidation(workbook, false);
-                        var limsDataModel = openWorkbook.LIMSDataFetch.FetchAndLoadMasterData(openWorkbook.LvHelper, "https://hoeapp910.na.xom.com/labvantage", "R2302-010006-001");
+                        LIMSDataModel limsDataModel = openWorkbook.LIMSDataFetch.FetchAndLoadMasterData(openWorkbook.LvHelper, "https://hoeapp910.na.xom.com/labvantage", "R2302-010006-001");
                         worksheet = workbook.Worksheets[2];
                         worksheet.Cells[5, 6].Value2 = "BTEC_10035";
                         worksheet.Cells[4, 6].Value2 = "BTEC";
