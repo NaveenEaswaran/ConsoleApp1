@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
-
+using Microsoft.Office.Core;
 using Newtonsoft.Json;
 
 using System.Net;
@@ -17,6 +17,8 @@ using IIntakeBase = Xom.Gci.Addin.LvMake.IIntake;
 using Xom.Gci.Addin.LvMake.SimpleIntake;
 using Xom.Gci.Addin.LvMake.Helpers;
 using Xom.Gci.Addin.LvMake.Common.Models;
+using Microsoft.Office.Interop.Excel;
+using System.Reflection;
 
 namespace ConsoleApp1
 {
@@ -91,7 +93,7 @@ namespace ConsoleApp1
 
         public static void IntakeFormExcelFile()
         {
-            string fileName = "R2302-010006-001_Intake.xlsx";
+            string fileName = "R2302-010016-001_Intake.xlsx";
             string sourcePath = @"C:\Users\naveene\Downloads\New folder (2)";
             string targetPath = @"C:\Users\naveene\Downloads\New folder";
 
@@ -123,10 +125,11 @@ namespace ConsoleApp1
                         excelApp = new Excel.Application();
                         Console.WriteLine("Loading the Excel File ");
                       
-                        workbook = excelApp.Workbooks.Open(destFile);
-                            
-        //IntakeBase.IntakeValidate validate = new IntakeBase.IntakeValidate();
-        IntakeBase.OpenWorkbook openWorkbook = new IntakeBase.OpenWorkbook();
+                       workbook = excelApp.Workbooks.Open(destFile);
+                        workbook = excelApp.ActiveWorkbook;
+                        DocumentProperties prop = workbook.CustomDocumentProperties as DocumentProperties;
+                        //IntakeBase.IntakeValidate validate = new IntakeBase.IntakeValidate();
+                        IntakeBase.OpenWorkbook openWorkbook = new IntakeBase.OpenWorkbook();
                       
                         var configWorksheet = (Excel.Worksheet)workbook.Sheets[GlobalValue.ConfigSheet];
 
@@ -138,6 +141,7 @@ namespace ConsoleApp1
                         Excel.Worksheet mainSheet = (Excel.Worksheet)workbook.Worksheets[GlobalValue.MainSheet];
                    
                         openWorkbook.AddinHelper = new SimpleIntakeAddinHelper(workbook, false);
+                        openWorkbook.AddinHelper.Unprotect();
                         openWorkbook.Ribbon = new SimpleIntakeRibbon(workbook);
                         openWorkbook.Inventory = new SimpleIntakeInventory(workbook);
                         openWorkbook.ActualIngredient = new SimpleIntakeActualIng(workbook);
@@ -172,11 +176,42 @@ namespace ConsoleApp1
                         openWorkbook.Context = new SimpleIntakeContext(workbook, false);
                         openWorkbook.ReviewComplete = new SimpleIntakeReviewComplete(workbook, false);
                         openWorkbook.Validation = new SimpleIntakeValidation(workbook, false);
-                        LIMSDataModel limsDataModel = openWorkbook.LIMSDataFetch.FetchAndLoadMasterData(openWorkbook.LvHelper, "https://hoeapp910.na.xom.com/labvantage", "R2302-010006-001");
-                        worksheet = workbook.Worksheets[2];
-                        worksheet.Cells[5, 6].Value2 = "BTEC_10035";
-                        worksheet.Cells[4, 6].Value2 = "BTEC";
-                
+                     
+                        LIMSDataModel limsDataModel = openWorkbook.LIMSDataFetch.FetchAndLoadMasterData(openWorkbook.LvHelper, "https://hoeapp910.na.xom.com/labvantage", "R2302-010016-001");
+                        if (limsDataModel != null)
+                        {
+                            //Reinstantiating Validation object citing Master Data Refresh
+                            //if (IsSimpleIntakeFile(workbook) || IsRubberIntakeFile(workbook))
+                            //{
+                                openWorkbook.Validation = new SimpleIntakeValidation(workbook, false);
+                                openWorkbook.Ribbon = new SimpleIntakeRibbon(workbook);
+                                openWorkbook.ReviewComplete = new SimpleIntakeReviewComplete(workbook, false);
+                                openWorkbook.ProcessVariblesBatchContainers = new SimpleIntakeContainerProcessVariables(workbook);
+                                Excel.Worksheet sheetName = (Excel.Worksheet)workbook.Worksheets[GlobalValue.FormulationSheet];
+                                openWorkbook.Validation.ApplyCellFormats(sheetName);
+                                openWorkbook.LIMSDataFetch.FetchAndLoadSheetData(openWorkbook.LvHelper, limsDataModel, openWorkbook.Validation, openWorkbook.Context, openWorkbook.Ingredient, openWorkbook.Formulation,
+                                openWorkbook.Blends, openWorkbook.ProcessVariables, openWorkbook.ActualIngredient, openWorkbook.BatchContainer,
+                                openWorkbook.Inventory, openWorkbook.Ribbon, openWorkbook.CfHelper, openWorkbook.ColumnWidthHelper, openWorkbook.TreatedIngredient, openWorkbook.TreatedBatches, openWorkbook.Tests, openWorkbook.ProcessVariblesBatchContainers, openWorkbook.ReviewComplete, true);
+                            //}
+                            //else if (IsStructuredIntakeFile(workbook))
+                            //{
+
+                            //    //openWorkbook.Validation = new FilmIntakeValidation(workbook);
+                            //    openWorkbook.Validation = new SimpleIntakeValidation(workbook, false);
+                            //    openWorkbook.Ribbon = new SimpleIntakeRibbon(workbook);
+                            //    openWorkbook.ReviewComplete = new SimpleIntakeReviewComplete(workbook, false);
+                            //    openWorkbook.ProcessVariblesBatchContainers = new SimpleIntakeContainerProcessVariables(workbook);
+                            //    Excel.Worksheet sheetName = (Excel.Worksheet)workbook.Worksheets[GlobalValue.StructuredFormulationSheet];
+                            //    openWorkbook.Validation.ApplyCellFormats(sheetName);
+                            //    openWorkbook.LIMSDataFetch.FetchAndLoadSheetData(openWorkbook.LvHelper, limsDataModel, openWorkbook.Validation, openWorkbook.Context, openWorkbook.Ingredient, openWorkbook.Formulation,
+                            //    openWorkbook.Blends, openWorkbook.ProcessVariables, openWorkbook.ActualIngredient, openWorkbook.BatchContainer,
+                            //    openWorkbook.Inventory, openWorkbook.Ribbon, openWorkbook.CfHelper, openWorkbook.ColumnWidthHelper, openWorkbook.TreatedIngredient, openWorkbook.TreatedBatches, openWorkbook.Tests, openWorkbook.ProcessVariblesBatchContainers, openWorkbook.ReviewComplete, false);
+                            //    openWorkbook.Formulation.UpdateShortNamesInDropdown();
+                            //    //openWorkbook.ProcessVariblesBatchContainers = new FilmIntakeContainerProcessVariables(workbook);
+                            //}
+                        }
+          
+                        openWorkbook.AddinHelper.Protect();
                         workbook.Save();
                         workbook.Close();
                         Console.WriteLine("Value has return Successfully!!!!! ");
@@ -190,35 +225,7 @@ namespace ConsoleApp1
             }
         }
 
-        //private static HttpClient httpClient;
-        //private static HttpClientHandler httpHandler;
-        //private static string lvBaseUrl;
-        //private static string lvDatabaseId;
-        ////public static LvConnection connection;
-        //private static string lvConnectionID;
-        //private static string jSessionID;
-        //public static LvConnection connection = new LvConnection();
-        //public static bool IsUnauthorized { get; set; }
-        //public static void LvHelper(string username, string password, string baseUrl, string databaseId)
-        //{
-        //    // To adhere to security guidelines - LIMS portal upgraded to TSL level 1.2 & 1.3 
-        //    ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
-
-        //    httpHandler = new HttpClientHandler();
-        //    httpClient = new HttpClient(httpHandler);
-        //    lvBaseUrl = baseUrl;
-        //    lvDatabaseId = databaseId;
-        //    IsUnauthorized = true;
-        //    httpClient.BaseAddress = new Uri(lvBaseUrl);
-        //    lvConnectionID = string.Empty;
-        //    jSessionID = string.Empty;
-
-
-        //    connection.DatabaseId = lvDatabaseId;
-        //    connection.Username = username;
-        //    connection.Password = password;
-
-        //}
+      
         public static void Login()
         {
             // To adhere to security guidelines - LIMS portal upgraded to TSL level 1.2 & 1.3 
@@ -289,6 +296,67 @@ namespace ConsoleApp1
                     //MessageBox.Show("Connection timed out. Kindly re-login to LabVantage");
                 }
             }
+         
+            }
+
+
+            public static bool IsStructuredIntakeFile(Excel.Workbook workbook)
+            {
+                try
+                {
+                    DocumentProperties properties = workbook.BuiltinDocumentProperties as DocumentProperties;
+                    string keywords = properties["Keywords"].Value;
+
+                    return (!string.IsNullOrEmpty(keywords) && keywords.Contains("LV Make") && keywords.Contains("Structured"));
+                }
+                catch
+                {
+                    return false;
+                }
+            }
+
+            public static bool IsRubberIntakeFile(Excel.Workbook workbook)
+            {
+                try
+                {
+                    DocumentProperties properties = workbook.BuiltinDocumentProperties as DocumentProperties;
+                    string keywords = properties["Keywords"].Value;
+
+                    return (!string.IsNullOrEmpty(keywords) && keywords.Contains("LV Make") && keywords.Contains("Rubber"));
+                }
+                catch
+                {
+                    return false;
+                }
+            }
+            public static bool IsMonoIntakeFile(Excel.Workbook workbook)
+            {
+                try
+                {
+                    DocumentProperties properties = workbook.BuiltinDocumentProperties as DocumentProperties;
+                    string keywords = properties["Keywords"].Value;
+
+                    return (!string.IsNullOrEmpty(keywords) && keywords.Contains("LV Make") && keywords.Contains("Mono-Layer"));
+                }
+                catch
+                {
+                    return false;
+                }
+            }
+
+            public static bool IsSimpleIntakeFile(Excel.Workbook workbook)
+            {
+                try
+                {
+                    DocumentProperties properties = workbook.BuiltinDocumentProperties as DocumentProperties;
+                    string keywords = properties["Keywords"].Value;
+
+                    return (!string.IsNullOrEmpty(keywords) && keywords.Contains("LV Make") && (keywords.Contains("Simple") || keywords.Contains("Mono-Layer")));
+                }
+                catch
+                {
+                    return false;
+                }
+            }
         }
-    }
 }
