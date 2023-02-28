@@ -125,9 +125,22 @@ namespace ConsoleApp1
                         excelApp = new Excel.Application();
                         Console.WriteLine("Loading the Excel File ");
                       
-                       workbook = excelApp.Workbooks.Open(destFile);
+                        workbook = excelApp.Workbooks.Open(destFile);
                         workbook = excelApp.ActiveWorkbook;
-                        DocumentProperties prop = workbook.CustomDocumentProperties as DocumentProperties;
+
+                        //DocumentProperties prop = workbook.CustomDocumentProperties as DocumentProperties;
+
+                        // New code to get document properties
+                        Dictionary<string, string> docProps = new Dictionary<string, string>();
+                        if (workbook != null)
+                        {
+                            dynamic properties = workbook.CustomDocumentProperties;
+                            foreach (dynamic p in properties)
+                            {
+                                docProps.Add(Convert.ToString(p.Name), Convert.ToString(p.Value));
+                            }
+                        }
+
                         //IntakeBase.IntakeValidate validate = new IntakeBase.IntakeValidate();
                         IntakeBase.OpenWorkbook openWorkbook = new IntakeBase.OpenWorkbook();
                       
