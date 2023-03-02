@@ -17,7 +17,7 @@ using Xom.Gci.Addin.LvMake.Helpers;
 using Xom.Gci.Addin.LvMake.Common.Models;
 using Microsoft.Office.Interop.Excel;
 using System.Reflection;
-using WB=Xom.Gci.Addin.LvMake;
+using WB = Xom.Gci.Addin.LvMake;
 using System.Windows.Forms;
 
 namespace ConsoleApp1
@@ -90,7 +90,7 @@ namespace ConsoleApp1
         {
             try
             {
-                string fileName = "R2302-010016-001_Intake.xlsx";
+                string fileName = "R2302-010035-001_Intake.xlsx";
                 string sourcePath = @"C:\Users\naveene\Downloads\New folder (2)";
                 string targetPath = @"C:\Users\naveene\Downloads\New folder";
 
@@ -162,7 +162,8 @@ namespace ConsoleApp1
                             openWorkbook.ReviewComplete = new SimpleIntakeReviewComplete(workbook, false);
                             openWorkbook.Validation = new SimpleIntakeValidation(workbook, false);
                             openWorkbook.AddinHelper.Unprotect();
-                            LIMSDataModel limsDataModel = openWorkbook.LIMSDataFetch.FetchAndLoadMasterData(openWorkbook.LvHelper, "https://hoeapp910.na.xom.com/labvantage", "R2302-010016-001");
+                            Console.WriteLine("LIMS Data Loading started.... ");
+                            LIMSDataModel limsDataModel = openWorkbook.LIMSDataFetch.FetchAndLoadMasterData(openWorkbook.LvHelper, "https://hoeapp910.na.xom.com/labvantage", "R2302-010035-001");
                             if (limsDataModel != null)
                             {
                                 //Reinstantiating Validation object citing Master Data Refresh
@@ -195,10 +196,11 @@ namespace ConsoleApp1
                                     //openWorkbook.ProcessVariblesBatchContainers = new FilmIntakeContainerProcessVariables(workbook);
                                 }
                             }
+                            Console.WriteLine("LIMS Data Loading Completed.... ");
                             openWorkbook.AddinHelper.Protect();
                             workbook.Save();
                             workbook.Close();
-                            Console.WriteLine("Value has return Successfully!!!!! ");
+                            Console.WriteLine("Excel File Saved Successfully!!!!! ");
                         }
 
                     }
@@ -211,6 +213,7 @@ namespace ConsoleApp1
             }
             catch (Exception ex)
             {
+                workbook.Close();
                 MessageBox.Show($"Load Data Failed! {ex}");
             }
 
@@ -295,15 +298,11 @@ namespace ConsoleApp1
         {
             try
             {
-                Dictionary<string, string> docProps = new Dictionary<string, string>();
-
-                dynamic properties = workbook.CustomDocumentProperties ;
-                foreach (dynamic p in properties)
-                {
-                    docProps.Add(Convert.ToString(p.Name), Convert.ToString(p.Value));
-                }
-
-                string keywords = docProps["Keywords"];
+                object customProperties = workbook.BuiltinDocumentProperties;
+                Type docPropsType = customProperties.GetType();
+                Object Keywordsprop = docPropsType.InvokeMember("Item", BindingFlags.Default | BindingFlags.GetProperty, null, customProperties, new object[] { "Keywords" });
+                Type typeKeywordsprop = Keywordsprop.GetType();
+                string keywords = typeKeywordsprop.InvokeMember("Value", BindingFlags.Default | BindingFlags.GetProperty, null, Keywordsprop, new object[] { }).ToString();
                 return (!string.IsNullOrEmpty(keywords) && keywords.Contains("LV Make") && keywords.Contains("Structured"));
             }
             catch
@@ -316,15 +315,11 @@ namespace ConsoleApp1
         {
             try
             {
-                Dictionary<string, string> docProps = new Dictionary<string, string>();
-
-                dynamic properties = workbook.CustomDocumentProperties ;
-                foreach (dynamic p in properties)
-                {
-                    docProps.Add(Convert.ToString(p.Name), Convert.ToString(p.Value));
-                }
-
-                string keywords = docProps["Keywords"];
+                object customProperties = workbook.BuiltinDocumentProperties;
+                Type docPropsType = customProperties.GetType();
+                Object Keywordsprop = docPropsType.InvokeMember("Item", BindingFlags.Default | BindingFlags.GetProperty, null, customProperties, new object[] { "Keywords" });
+                Type typeKeywordsprop = Keywordsprop.GetType();
+                string keywords = typeKeywordsprop.InvokeMember("Value", BindingFlags.Default | BindingFlags.GetProperty, null, Keywordsprop, new object[] { }).ToString();
 
                 return (!string.IsNullOrEmpty(keywords) && keywords.Contains("LV Make") && keywords.Contains("Rubber"));
             }
@@ -352,17 +347,11 @@ namespace ConsoleApp1
         {
             try
             {
-                //DocumentProperties properties = Globals.ThisAddIn.Application.ActiveWorkbook.BuiltinDocumentProperties as DocumentProperties;
-                Dictionary<string, string> docProps = new Dictionary<string, string>();
-
-                dynamic properties = workbook.CustomDocumentProperties ;
-                foreach (dynamic p in properties)
-                {
-                    docProps.Add(Convert.ToString(p.Name), Convert.ToString(p.Value));
-                }
-
-                string keywords = docProps["Keywords"];
-
+                object customProperties = workbook.BuiltinDocumentProperties;
+                Type docPropsType = customProperties.GetType();
+                Object Keywordsprop = docPropsType.InvokeMember("Item", BindingFlags.Default | BindingFlags.GetProperty, null, customProperties, new object[] { "Keywords" });
+                Type typeKeywordsprop = Keywordsprop.GetType();
+                string keywords = typeKeywordsprop.InvokeMember("Value", BindingFlags.Default | BindingFlags.GetProperty, null, Keywordsprop, new object[] { }).ToString();
                 return (!string.IsNullOrEmpty(keywords) && keywords.Contains("LV Make") && (keywords.Contains("Simple") || keywords.Contains("Mono-Layer")));
             }
             catch
